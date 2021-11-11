@@ -5,7 +5,7 @@ FROM node:14-alpine as builder
 ENV NODE_ENV production
 
 # 更好的根据 Image Layer 利用缓存
-ADD package.json pnpm-lock.json ./
+ADD package.json pnpm-lock.yaml ./
 RUN npm i -g pnpm
 RUN pnpm install
 
