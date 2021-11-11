@@ -1,23 +1,25 @@
-# 选择一个体积小的镜像 (~5MB)
 FROM node:14-alpine as builder
 
-# 环境变量设置为生产环境
-ENV NODE_ENV production
+ENV NODE_ENV build
 
-# 更好的根据 Image Layer 利用缓存
-ADD package.json pnpm-lock.yaml ./
-RUN npm i -g pnpm
-RUN pnpm install
+USER node
+WORKDIR /home/node
 
+COPY . /home/node
 
-# 多阶段构建之第二阶段
+RUN npm ci \
+    && npm run build \
+    && npm prune --production
+
 FROM node:14-alpine
 
-WORKDIR /code
 ENV NODE_ENV production
 
-ADD . .
-COPY --from=builder node_modules node_modules
+USER node
+WORKDIR /home/node
 
-EXPOSE 3000
-CMD pnpm start:prod
+COPY --from=builder /home/node/package*.json /home/node/
+COPY --from=builder /home/node/node_modules/ /home/node/node_modules/
+COPY --from=builder /home/node/dist/ /home/node/dist/
+
+CMD ["node", "dist/main.js"]
